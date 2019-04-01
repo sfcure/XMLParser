@@ -111,7 +111,7 @@ public class XMLParser {
             if ( textContent != null && textContent.trim() != '' ) {
             
                 textContent = textContent.replace( '"', '\\"' );
-                lstAttributes.add( '"_text": "' + textContent + '"' );  
+                lstAttributes.add( '"ele_text": "' + textContent + '"' );  // Text which is part of the element
                   
             }
             if ( !isChild ){
