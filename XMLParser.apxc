@@ -35,7 +35,7 @@ public class XMLParser {
     public static String parse(Dom.XMLNode node, Boolean isChild){
         
         String json = '';
-        
+        Boolean isArray = false;
         if ( rootElementName == null ) {
             rootElementName = node.getName();
         }
@@ -55,15 +55,19 @@ public class XMLParser {
                     
                     String tmp = parse( child, true );
                     
-                    if ( !mapChildrenJSON.containsKey( child.getName() ) ){
+                    if( tmp != '' ) {
                     
-                        mapChildrenJSON.put( child.getName(), new List<String>() );     
+                        if ( !mapChildrenJSON.containsKey( child.getName() ) ){
+                        
+                            mapChildrenJSON.put( child.getName(), new List<String>() );     
+                        
+                        }
+                        
+                        // Add into a map to make a collection for the repeatative child nodes
+                        mapChildrenJSON.get( child.getName() ).add( tmp );  
                     
                     }
                     
-                    // Add into a map to make a collection for the repeatative child nodes
-                    mapChildrenJSON.get( child.getName() ).add( tmp );  
-                
                 } 
                 
                 // Strcuture the JSON based on the repeation 
@@ -71,9 +75,17 @@ public class XMLParser {
                 for ( String key : mapChildrenJSON.keySet() ){
                     
                     if ( mapChildrenJSON.get(key).size() > 1 ){
-                    
-                        lstJSONForChildren.add( '"' + key + '": [' + String.join(mapChildrenJSON.get(key), ', ') + ']' );
-                    
+                        if(isChild) {
+                        
+                            lstJSONForChildren.add( '[' + String.join(mapChildrenJSON.get(key), ', ') + ']' );
+                        
+                        }
+                        else {
+                        
+                            lstJSONForChildren.add( '"' + key + '": [' + String.join(mapChildrenJSON.get(key), ', ') + ']' );
+                                
+                        }
+                        isArray = true;
                     }
                     else {
                     
@@ -86,7 +98,7 @@ public class XMLParser {
             // Construc the JSON for all the node attributes 
             List<String> lstAttributes = new List<String>( lstJSONForChildren );
             
-            for ( Integer i=0; i<node.getAttributeCount(); i++ ){
+            for ( Integer i=0; i<node.getAttributeCount(); i++){
                 
                 String key = node.getAttributeKeyAt( i );
                 String value = node.getAttribute( key, '' );
@@ -103,9 +115,17 @@ public class XMLParser {
                   
             }
             if ( !isChild ){
-                
-                json = '"' + node.getName() + '": {' + String.join(lstAttributes,  ', ') + '}'; 
             
+                if(!isArray) {
+                
+                    json = '"' + node.getName() + '": {' + String.join(lstAttributes,  ', ') + '}'; 
+                    
+                }
+                else {
+                
+                    json = ' {' + String.join(lstAttributes,  ', ') + '}'; 
+                    
+                }
             }
             else {
                 if ( lstAttributes.size() == 1 && textContent != null && textContent.trim() != '' ){
@@ -114,13 +134,35 @@ public class XMLParser {
                     
                 } 
                 else {
-                    json = '{' + String.join(lstAttributes,  ', ') + '}'; 
+                    if(!isArray) {
+                    
+                        if( lstAttributes.size() > 0 ){
+                        
+                            json = '{' + String.join(lstAttributes,  ', ') + '}'; 
+                            
+                        }
+                        
+                    }
+                    else {
+                    
+                        json = String.join(lstAttributes,  ', '); 
+                        
+                    }
                 }   
             }
         }
         if ( rootElementName == node.getName() ) {
         
-            json = '{' + json + '}';
+            if(!isArray) {
+            
+                json = '{' + json + '}';
+            
+            }
+            else {
+                
+                json = '{"' + node.getName() + '" : ' + json + '}';
+                
+            }
         
         }
         
